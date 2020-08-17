@@ -1,0 +1,1442 @@
+<!DOCTYPE HTML PUBLIC "-//SoftQuad Software//DTD HoTMetaL PRO 5.0::19981217::extensions to HTML 4.0//EN" "hmpro5.dtd">
+ 
+<HTML>
+ 
+<HEAD>
+<TITLE>Jakarta Apache: MAILER JSP Tag Library</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="white">
+<CENTER>
+<H1>Jakarta Apache: MAILER JSP Tag Library</H1>
+<H3>Version 1.0</H3>
+</CENTER>
+<H3>Table of Contents</H3>
+<P><A HREF="#overview">Overview</A><BR>
+<A HREF="#requirements">Requirements</A><BR>
+<A HREF="#config">Configuration</A><BR>
+<A HREF="#summary">Tag Summary</A><BR>
+<A HREF="#reference">Tag Reference</A><BR>
+<A HREF="#examples">Examples</A><BR>
+<A HREF="#javadocs">Javadocs</A><BR>
+<A HREF="#history">Revision History</A><BR>
+<BR>
+<A NAME="overview"></A></P>
+<H3>Overview</H3>
+<P>This custom tag library is used to send e-mail.<BR>
+</P>
+<P>E-mail can be sent in three ways.  The first way requires the name of the SMTP
+host to use. The second requires the name of a JNDI Resource for a JavaMail Session.  The third requires the name of a JNDI Resource for a JavaMail MimePartDataSource.  Refer to your servlet container documentation to determine which of these three methods you should use. During the creation of an e-mail message, the addresses are checked for the correct format.  After the e-mail message has been created the send tag spawns a thread to send the message in the background so that the user does not have to wait for the SMTP host if it is busy.  </P>
+<PRE>
+&lt;!-- Create a message by entering the name of the SMTP host. --&gt;
+&lt;!-- The default for this attribute is localhost; for a host other --&gt;
+&lt;!-- than localhost supply it's name with the <B>server</B> attribute --&gt;
+&lt;!-- as in the example below.  The body of the e-mail is supplied in the --&gt;
+&lt;!-- message tag. The send tag is necessary to send the message. --&gt;
+&lt;mt:mail server=&quot;home.net&quot; to=&quot;foo@home.net&quot;
+from=&quot;bar@home.net&quot; subject=&quot;mail taglib&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;[<I>body of message</I>]&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+<BR>
+&lt;!-- Using a JNDI named JavaMail Session object defined by the --&gt;
+&lt;!-- <B>session</B> attribute. --&gt;
+&lt;mt:mail session=&quot;java:comp/env/session&quot; to=&quot;foo@home.net&quot;
+from=&quot;bar@home.net&quot; subject=&quot;mail taglib&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;[<I>body of message</I>]&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+<BR>
+&lt;!-- Or using a JNDI named JavaMail MimePartDataSource object --&gt;
+&lt;!--  defined by <B>mimeMessage</B> attribute. --&gt;
+&lt;mt:mail mimeMessage=&quot;java:comp/env/message&quot; to=&quot;foo@home.net&quot;
+from=&quot;bar@home.net&quot; subject=&quot;mail taglib&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;[<I>body of message</I>]&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+<BR>
+</PRE>
+<P>How e-mail is delivered depends on the JavaMail SMTP host settings.  The JavaMail SMTP host can be configured by your Servlet Container so that bounced or undeliverable e-mails are returned to the sender by setting the folowing properties.<BR>
+
+<TABLE BORDER>
+<TR>
+<TH>Name</TH>
+<TH>Type</TH>
+<TH>Description</TH>
+</TR>
+
+<TR>
+<TD>mail.smtp.dsn.notify</TD>
+<TD>String</TD>
+<TD>Property determines if the user will be notified of undeliverable mail.  Either NEVER, or some combination of SUCCESS, FAILURE, and DELAY (separated by commas).</TD>
+</TR>
+
+<TR>
+<TD>mail.smtp.dsn.ret</TD>
+<TD>String</TD>
+<TD>Determines what part of the undeliverable message will be returned in the message to the sender.  Either FULL or HDRS.</TD>
+</TR>
+
+<TR>
+<TD>mail.smtp.sendpartial</TD>
+<TD>boolean</TD>
+<TD>
+If set to true, and a message has some valid and some invalid
+addresses, send the message anyway, reporting the partial failure with
+a SendFailedException.  If set to false (the default), the message is
+not sent to any of the recipients if there is an invalid recipient
+address.
+</TD>
+</TR>
+</TABLE>
+
+<H3><A NAME="requirements">Requirements</A></H3>
+<P>This custom tag library requires a servlet container that supports the
+JavaServer Pages Specification, version 1.1.  <A
+ HREF="http://java.sun.com/products/javamail">JavaMail 1.2</A>
+and the <A
+HREF="http://java.sun.com/products/glasgow/jaf.html">JavaBeans Activation Framework</A> should be installed as extensions to your JVM.
+</P>
+<H3>Configuration</H3>
+<P>Follow these steps to configure your web application with this tag library: 
+</P>
+<UL>
+<LI>Copy the tag library descriptor file (<TT>mailer/mailer.tld</TT>) to the
+<TT>/WEB-INF</TT> subdirectory of your web application.</LI>
+<LI>Copy the tag library JAR file (<TT>mailer/mailer.jar</TT>) to the
+<TT>/WEB-INF/lib</TT> subdirectory of your web application.</LI>
+<LI>Add a &lt;taglib&gt; element to your web application deployment descriptor
+in <TT>/WEB-INF/web.xml</TT> like this:<BR>
+<BR>
+<PRE>
+&lt;taglib&gt;
+  &lt;taglib-uri&gt;mailer.jar&lt;/taglib-uri&gt;
+  &lt;taglib-location&gt;/WEB-INF/mailer.tld&lt;/taglib-location&gt;
+&lt;/taglib&gt;
+</PRE>
+
+</LI>
+</UL>
+<P>To use the tags from this library in your JSP pages, add the following
+directive at the top of each page: </P>
+<PRE>
+&lt;%@ taglib uri=&quot;mailer.jar&quot; prefix=&quot;mt&quot; %&gt;
+</PRE>
+
+<P>where &quot;<I>mt</I>&quot; is the tag name prefix you wish to use for tags
+from this library. You can change this value to any prefix you like. The prefix
+<B>mt</B> is used in the examples below.</P>
+<H3><A NAME="summary">Tag Summary</A></H3>
+<TABLE>
+<TR>
+<TD COLSPAN="2"><B>Mailer Tags</B></TD>
+</TR>
+<TR>
+<TD><A HREF="#mail">mail</A></TD>
+<TD>Used to create an e-mail message.</TD>
+</TR>
+<TR>
+<TD><A HREF="#message">message</A></TD>
+<TD>Used to set the body of the message.</TD>
+</TR>
+<TR>
+<TD><A HREF="#header">header</A></TD>
+<TD>Used to set extra message headers.</TD>
+</TR>
+<TR>
+<TD><A HREF="#setto">setto</A></TD>
+<TD>Used to set one or more To addresses in the message.</TD>
+</TR>
+<TR>
+<TD><A HREF="#addto">addto</A></TD>
+<TD>Used to add one address at a time to the list of To addresses.</TD>
+</TR>
+<TR>
+<TD><A HREF="#replyto">replyto</A></TD>
+<TD>Used to set one or more Reply-To addresses in the message.</TD>
+</TR>
+<TR>
+<TD><A HREF="#from">from</A></TD>
+<TD>Used to set the From address of the message.</TD>
+</TR>
+<TR>
+<TD><A HREF="#setcc">setcc</A></TD>
+<TD>Used to set one or more Cc addresses in the message.</TD>
+</TR>
+<TR>
+<TD><A HREF="#addcc">addcc</A></TD>
+<TD>Used to add one address at a time to the list of Cc addresses.</TD>
+</TR>
+<TR>
+<TD><A HREF="#setbcc">setbcc</A></TD>
+<TD>Used to set one or more Bcc addresses in the message.</TD>
+</TR>
+<TR>
+<TD><A HREF="#addbcc">addbcc</A></TD>
+<TD>Used to add one address at a time to the list of Bcc addresses.</TD>
+</TR>
+<TR>
+<TD><A HREF="#subject">subject</A></TD>
+<TD>Used to set the subject of the message.</TD>
+</TR>
+<TR>
+<TD><A HREF="#attach">attach</A></TD>
+<TD>Used to add an attachment to an e-mail message..</TD>
+</TR>
+<TR>
+<TD><A HREF="#send">send</A></TD>
+<TD>Used to send the message.</TD>
+</TR>
+<TR>
+<TD><A HREF="#error">error</A></TD>
+<TD>Used to get messages explaining errors that occurred in setting any of the addresses.</TD>
+</TR>
+</TABLE>
+<H3><A NAME="reference">Tag Reference</A></H3>
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="mail">&nbsp;mail</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to create an e-mail message.  Most attributes set via a tag within the body of this tag will take precedence and override any value that was set as an attribute in this tag.  In the case of the three add tags, however, an address set as an attribute will not be overridden, but will be the first address in the list.</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> 
+      <TABLE BORDER="0" WIDTH="100%">
+        <TR> 
+          <TD WIDTH="20%"><B>Tag Body</B></TD>
+          <TD WIDTH="80%">JSP</TD>
+        </TR>
+        <TR> 
+          <TD WIDTH="20%"><B>Script Variable</B></TD>
+          <TD WIDTH="80%">No</TD>
+        </TR>
+        <TR> 
+          <TD WIDTH="20%"><B>Restrictions</B></TD>
+          <TD WIDTH="80%">None</TD>
+        </TR>
+        <TR>
+          <TD WIDTH="20%"><b>Attributes</b></TD>
+          <TD WIDTH="80%">&nbsp;</TD>
+        </TR>
+        <TR> 
+          <TD WIDTH="20%">&nbsp;</TD>
+          <TD WIDTH="80%">
+		<TABLE BORDER="0" WIDTH="100%">
+              <TR> 
+                <TD width="40%">Name</TD>
+                <TD width="20%">Required</TD>
+                <TD width="40%">Runtime Expression Evaluation</td>
+              </TR>
+	      <TR BGCOLOR="#CCCCCC">
+		<TD WIDTH="40%"><B>&nbsp;authentication</B></TD>
+		<TD WIDTH="20%">&nbsp;No</TD>
+		<TD WIDTH="40%">&nbsp;No</TD>
+              </TR>
+              <TR>
+                <TD COLSPAN="3">A value of true of false tells the mailer taglib
+		  if the mail server uses authentication.  The default value is
+		  false.  If the value is set to true and the mail server uses
+		  authentication the user will be prompted for a name and password
+		  before the mail is sent.</TD>
+              </TR>
+              <tr> 
+                <td colspan="3">&nbsp;</td>
+              </tr>
+              <tr> 
+                <td colspan="3">If none of the following three attributes is given
+                  the tag will default to using localhost as the SMTP host. </td>
+              </tr>
+              <tr> 
+                <td colspan="3">&nbsp; </td>
+              </tr>
+              <tr> 
+                <td colspan="3"> 
+                  <table border="0" width="100%">
+                    <tr bgcolor="#CCCCCC"> 
+                      <td width="40%"><b>&nbsp;server</b></td>
+                      <td width="20%">&nbsp;No</td>
+                      <td width="40%">&nbsp;No</td>
+                    </tr>
+                    <tr> 
+                      <td colspan="3">This attribute allows you to set the SMTP 
+                        host if it is going to be other than localhost.</td>
+                    </tr>
+                    <tr bgcolor="#CCCCCC"> 
+                      <td width="40%"><b>&nbsp;session</b></td>
+                      <td width="20%">&nbsp;No</td>
+                      <td width="40%">&nbsp;No</td>
+                    </tr>
+                    <tr> 
+                      <td colspan="3">This attribute allows a message to be created 
+                        using a predefined, JNDI named Session object. </td>
+                    </tr>
+                    <tr bgcolor="#CCCCCC"> 
+                      <td width="40%"><b>&nbsp;mimeMessage</b></td>
+                      <td width="20%">&nbsp;No</td>
+                      <td width="40%">&nbsp;No</td>
+                    </tr>
+                    <tr> 
+                      <td colspan="3">This attribute allows a message to be created 
+                        using a predefined, JNDI named MimePartDataSource. </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr> 
+                <td colspan="3">&nbsp;</td>
+              </tr>
+              <tr>
+                <td colspan="3">The following attributes can be set either as 
+                  attributes in the mail tag, or by the corresponding tags within 
+                  the body of the mail tag. </td>
+              </tr>
+              <tr> 
+                <td colspan="3">&nbsp; </td>
+              </tr>
+              <tr> 
+                <td colspan="3"> 
+                  <table border="0" width="100%">
+                    <tr bgcolor="#CCCCCC"> 
+                      <td width="40%"><b>&nbsp;to</b></td>
+                      <td width="20%">&nbsp;No</td>
+                      <td width="40%">&nbsp;No</td>
+                    </tr>
+                    <tr> 
+                      <td colspan="3">The To address of the e-mail. Accepts a 
+                        comma separated list of addresses.</td>
+                    </tr>
+                    <tr bgcolor="#CCCCCC"> 
+                      <td width="40%"><b>&nbsp;replyTo</b></td>
+                      <td width="20%">&nbsp;No</td>
+                      <td width="40%">&nbsp;No</td>
+                    </tr>
+                    <tr> 
+                      <td colspan="3">The Reply-To address of the e-mail. Accepts 
+                        a comma separated list of addresses.</td>
+                    </tr>
+                    <tr bgcolor="#CCCCCC"> 
+                      <td width="40%"><b>&nbsp;from</b></td>
+                      <td width="20%">&nbsp;No</td>
+                      <td width="40%">&nbsp;No</td>
+                    </tr>
+                    <tr> 
+                      <td colspan="3">The From address of the e-mail. </td>
+                    </tr>
+                    <tr bgcolor="#CCCCCC"> 
+                      <td width="40%"><b>&nbsp;cc</b></td>
+                      <td width="20%">&nbsp;No</td>
+                      <td width="40%">&nbsp;No</td>
+                    </tr>
+                    <tr> 
+                      <td colspan="3">The Carbon Copy address of the e-mail. Accepts 
+                        a comma separated list of addresses. </td>
+                    </tr>
+                    <tr bgcolor="#CCCCCC"> 
+                      <td width="40%"><b>&nbsp;bcc</b></td>
+                      <td width="20%">&nbsp;No</td>
+                      <td width="40%">&nbsp;No</td>
+                    </tr>
+                    <tr> 
+                      <td colspan="3">The Blind Carbon Copy address of the e-mail. 
+                        Accepts a comma separated list of addresses. </td>
+                    </tr>
+                    <tr bgcolor="#CCCCCC"> 
+                      <td width="40%"><b>&nbsp;subject</b></td>
+                      <td width="20%">&nbsp;No</td>
+                      <td width="40%">&nbsp;No</td>
+                    </tr>
+                    <tr> 
+                      <td colspan="3">The Subject of the e-mail. </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </TD>
+        </TR>
+        <TR> 
+          <TD WIDTH="20%"><b>Properties</b></TD>
+          <TD WIDTH="80%">None</TD>
+        </TR>
+        <TR> 
+          <TD WIDTH="20%" VALIGN="TOP"><b>Example</b></TD>
+          <TD WIDTH="80%"><br>
+            <pre>
+&lt;!-- Send a basic message: set the to, from, and subject attributes. --&gt;
+&lt;!-- The server attribute is not set, therefore the default setting --&gt;
+&lt;!-- of localhost will be used for the SMTP host. --&gt;
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot;subject=&quot;mail taglib&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;[<i>body of message</i>]&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+          </TD>
+        </TR>
+      </TABLE>
+
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="message">&nbsp;message</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to set the body of the message.<BR>Message will appear as it is written, any carriage returns and spaces in the JSP will be present in the delivered message.</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a mail tag.<BR>Must occur before the send tag.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%">&nbsp;</TD>
+</TR>
+<TR>
+<TD WIDTH="20%">&nbsp;</TD>
+<TD WIDTH="80%"><TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="40%">Name</TD>
+<TD WIDTH="20%">Required</TD>
+<TD WIDTH="40%">Runtime Expression Evaluation</TD>
+</TR>
+<TR BGCOLOR="#CCCCCC">
+<TD WIDTH="40%"><B>&nbsp;type</B></TD>
+<TD WIDTH="20%">&nbsp;No</TD>
+<TD WIDTH="40%">&nbsp;No</TD>
+</TR>
+<TR>
+<TD COLSPAN="3">This attribute has two possible values text or html. If text
+is selected the body of the message is just plain text (it has no html
+tags within it). If html is selected then the body of the message can contain
+HTML tags. The default value for this attribute is text. </TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Send a basic message: set the to, from, and subject attributes. --&gt;
+&lt;!-- The type attribute is not used in the message tag, it defaults --&gt;
+&lt;!-- to text --&gt;
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot; subject=&quot;mail taglib&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+<BR>
+&lt;!-- Send the same message only this time HTML tags are included in --&gt;
+&lt;!-- the body of the message for formatting. --&gt;
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot; subject=&quot;mail taglib&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message type=&quot;html&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[<I>body of message containing html formatting</I>]
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="header">&nbsp;header</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to set extra headers in the message. See  
+<A HREF="http://www.stopspam.org/email/headers.html">Documentation</A> for further information on other e-mail headers.</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a mail tag.<BR>Must occur before the send tag.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%"></TD>
+</TR>
+<TR>
+<TD WIDTH="20%">&nbsp;</TD>
+<TD WIDTH="80%">
+<TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="40%">Name</TD>
+<TD WIDTH="20%">Required</TD>
+<TD WIDTH="40%">Runtime Expression Evaluation</TD>
+</TR>
+<TR BGCOLOR="#CCCCCC">
+<TD WIDTH="40%"><B>&nbsp;name</B></TD>
+<TD WIDTH="20%">&nbsp;Yes</TD>
+<TD WIDTH="40%">&nbsp;No</TD>
+</TR>
+<TR>
+<TD COLSPAN="3">The name of the extra header to be set.</TD>
+</TR>
+<TR BGCOLOR="#CCCCCC">
+<TD WIDTH="40%"><B>&nbsp;value</B></TD>
+<TD WIDTH="20%">&nbsp;No</TD>
+<TD WIDTH="40%">&nbsp;No</TD>
+</TR>
+<TR>
+<TD COLSPAN="3">The value of the extra header to be set.  This can also be placed in the body of the tag (see example).</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Set the header Precedence with the value as an attribute. --&gt;
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot; subject=&quot;mail taglib&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:header name=&quot;Precedence&quot; value=&quot;bulk&quot;/&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+<BR>
+&lt;!-- Set the header Precedence with the value set in the body --&gt;
+&lt;!-- of the tag. --&gt;
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot; subject=&quot;mail taglib&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:header name=&quot;Precedence&quot;&gt;bulk&lt;/mt:header&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="setto">&nbsp;setto</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to set one or more To addresses in the message. Accepts a
+comma separated list of addresses.</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a mail tag.<BR>Must occur before the send tag.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Set <I>to</I> in the e-mail started with the &lt;mt:mail&gt; --&gt;
+&lt;!-- tag, to foo@home.net. --&gt;
+<BR>
+&lt;mt:mail from=&quot;bar@home.net&quot; subject=&quot;mailer taglib&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:setto&gt;foo@home.net&lt;/mt:setto&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+<BR>
+&lt;!-- Set <I>to</I> in the e-mail started with the &lt;mt:mail&gt; tag, --&gt;
+&lt;!-- to foo@home.net and geo@place.net. --&gt;
+<BR>
+&lt;mt:mail from=&quot;bar@home.net&quot; subject=&quot;mailer taglib&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:setto&gt;foo@home.net,geo@place.net&lt;/mt:setto&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="addto">&nbsp;addto</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to add one address at a time to the list of To addresses.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a mail tag.<BR>Must occur before the send tag.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Add geo@place.com to the list of <I>to</I> addresses started --&gt;
+&lt;!-- in the the &lt;mt:mail&gt; tag. --&gt;
+<BR>
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot; 
+subject=&quot;mailer taglib&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:addto&gt;geo@place.com&lt;/mt:addto&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="replyto">&nbsp;replyto</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to set one or more Reply-To addresses in the message.</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a mail tag.<BR>Must occur before the send tag.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Set <I>replyto</I> in the e-mail started with the &lt;mt:mail&gt; --&gt;
+&lt;!-- tag, to sax@home.net --&gt;
+<BR>
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot; 
+subject=&quot;mailer taglib&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:replyto&gt;sax@home.net&lt;/mt:replyto&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+<BR>
+&lt;!-- Set <I>replyto</I> in the e-mail started with the &lt;mt:mail&gt; --&gt;
+&lt;!-- tag, to sax@home.net and cur@blank.com --&gt;
+<BR>
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot; 
+subject=&quot;mailer taglib&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:replyto&gt;sax@home.net,cur@blank.com&lt;/mt:replyto&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="from">&nbsp;from</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to set the From address of the message.</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a mail tag.<BR>Must occur before the send tag.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Set <I>from</I> in the e-mail started with the &lt;mt:mail&gt; tag, --&gt;
+&lt;!-- to bar@home.net --&gt;
+<BR>
+&lt;mt:mail&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:setto&gt;foo@home.net&lt;/mt:setto&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:from&gt;bar@home.net&lt;/mt:from&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="setcc">&nbsp;setcc</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to set one or more Cc addresses in the message. </TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a mail tag.<BR>Must occur before the send tag.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Set <I>cc</I> to &quot;ay@home.net,aou@home.net,aei@home.net&quot; --&gt;
+&lt;!-- in the e-mail started with the &lt;mt:mail&gt; tag. --&gt;
+<BR>
+&lt;mt:mail&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:setto&gt;foo@home.net&lt;/mt:setto&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:from&gt;bar@home.net&lt;/mt:from&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:setcc&gt;ay@home.net,aou@home.net,aei@home.net&lt;/mt:setcc&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="addcc">&nbsp;addcc</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to add one address at a time to the list of Cc addresses.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a mail tag.<BR>Must occur before the sned tag.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Add aou@home.net and aei@home.net to the list of <I>cc</I> --&gt;
+&lt;!-- addresses started in the &lt;mt:mail&gt; tag. --&gt;
+<BR>
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot
+cc=&quot;ay@home.net&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:addcc&gt;aou@home.net&lt;/mt:addcc&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:addcc&gt;aei@home.net&lt;/mt:addcc&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="setbcc">&nbsp;setbcc</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to set one or more Bcc addresses in the message.</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a mail tag.<BR>Must occur before the send tag.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Set <I>bcc</I> to &quot;fur@home.net,fer@home.net,ayd@home.net&quot; --&gt;
+&lt;!-- in the e-mail started with the &lt;mt:mail&gt; tag. --&gt;
+<BR>
+&lt;mt:mail&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:setto&gt;foo@home.net&lt;/mt:setto&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:from&gt;bar@home.net&lt;/mt:from&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:setbcc&gt;fur@home.net,ffer@home.net,ayd@home.net&lt;/mt:setbcc&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="addbcc">&nbsp;addbcc</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to add one address at a time to the list of Bcc addresses.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a mail tag.<BR>Must occur before the send tag.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Add fer@home.net and ayd@home.net to the list of <I>bcc</I> --&gt;
+&lt;!-- addresses started in the &lt;mt:mail&gt; tag. --&gt;
+<BR>
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot
+bcc=&quot;fur@home.net&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:addbcc&gt;ffer@home.net&lt;/mt:addbcc&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:addbcc&gt;ayd@home.net&lt;/mt:addbcc&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="attach">&nbsp;attach</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to add an attachment to an e-mail message.  It is possible
+	        to add an attachment in one of three ways. First give the name of
+		the file that is to be added.  Second give the URL that points to
+		the resource that is to be added.  Third include the attachment 
+		in the body of the attach tag, in this case it is necessary to
+		use the type attribute and give the mime type of the attachment.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a mail tag.<BR>Must occur before the send tag.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%"></TD>
+</TR>
+<TR>
+<TD WIDTH="20%">&nbsp;</TD>
+<TD WIDTH="80%">
+<TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="40%">Name</TD>
+<TD WIDTH="20%">Required</TD>
+<TD WIDTH="40%">Runtime Expression Evaluation</TD>
+</TR>
+<TR BGCOLOR="#CCCCCC">
+<TD WIDTH="40%"><B>&nbsp;file</B></TD>
+<TD WIDTH="20%">&nbsp;No</TD>
+<TD WIDTH="40%">&nbsp;No</TD>
+</TR>
+<TR>
+<TD COLSPAN="3">The name of the file to be included as an attachment.  The name
+		of the file must be a path or file name realative to the root
+		directory of the web application.  If the value of the file
+		attribute equals "" (it is left empty) the tag will extract the
+		name of the file from the body of the tag.</TD>
+</TR>
+<TR BGCOLOR="#CCCCCC">
+<TD WIDTH="40%"><B>&nbsp;url</B></TD>
+<TD WIDTH="20%">&nbsp;No</TD>
+<TD WIDTH="40%">&nbsp;No</TD>
+</TR>
+<TR>
+<TD COLSPAN="3">The URL of a resource to be included as an attachment.  The URL
+		must be given as the full url like http://www.somedomain.com.  If
+		the value of the url attribute equals "" (it is left empty) the
+		url will be extracted from the body of the tag.
+</TD>
+</TR>
+<TR BGCOLOR="#CCCCCC">
+<TD WIDTH="40%"><B>&nbsp;type</B></TD>
+<TD WIDTH="20%">&nbsp;No</TD>
+<TD WIDTH="40%">&nbsp;No</TD>
+</TR>
+<TR>
+<TD COLSPAN="3">The mime type of the attachment that is included within the body
+		of the attach tag..</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Add the file mail/duck.gif as an attachment --&gt;
+&lt;!-- in the e-mail started with the &lt;mt:mail&gt; tag. --&gt;
+<BR>
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot; subject=&quot;test&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:attach file=&quot;mail/duck.gif&quot;/&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+<BR>
+&lt;!-- Add the resource named by the following url --&gt;
+&lt;!-- http://www.someplace.com/stuff.html as an attachment --&gt;
+&lt;!-- in the e-mail started with the &lt;mt:mail&gt; tag. --&gt;
+&lt;!-- Name the url in the body of the attach tag. --&gt;
+<BR>
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot; subject=&quot;test&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:attach url=&quot;&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;http://www.someplace.com/stuff.html
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/mt:attach&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+<BR>
+&lt;!-- Add the body of the attach tag as an attachment.  When the --&gt;
+&lt;!-- message comes "This is just a test" will be formatted with --&gt;
+&lt;!-- the &lt;h1&gt; tags. --&gt;
+<BR>
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot; subject=&quot;test&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:attach type=&quot;text/html&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;h1&gt;This is just a test&lt;/h1&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/mt:attach&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="subject">&nbsp;subject</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to set the subject in the message.</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a mail tag.<BR>Must occur before the send tag.
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Set <I>subject</I> to <I>"learning about the mail tag library"</I> --&gt;
+&lt;!-- in the e-mail started with the &lt;mt:mail&gt; tag. --&gt;
+<BR>
+&lt;mt:mail&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:setto&gt;foo@home.net&lt;/mt:setto&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:from&gt;bar@home.net&lt;/mt:from&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:subject&gt;learning about the mail tag library&lt;/mt:subject&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send/&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="send">&nbsp;send</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to send the message. If an error occured while creating the e-mail message and it cannot be sent, the body of this tag will be output to the browser. It is within the body of this tag where the page author can include an error message if it is desired.</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a mail tag.<BR>Must be the last tag nested
+within the mail tag.</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">None</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Send a message in which the following  "An error has occurred, --&gt;
+&lt;!-- please back up and check that the addresses you gave are in --&gt;
+&lt;!-- the correct format" will be printed if an error occurs while --&gt;
+&lt;!-- trying to put the message together. --&gt;
+<BR>
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:subject&gt;learning about the mail tag library&lt;/mt:subject&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;An error has occurred, please back up and check that the 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;addresses you gave are in the correct format.
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/mt:send&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+
+<TABLE BORDER="0" WIDTH="90%" CELLPADDING="3" CELLSPACING="0">
+<TR>
+<TD COLSPAN="2"> 
+<TABLE BORDER="0" BGCOLOR="#CCCCCC" WIDTH="100%" CELLSPACING="0">
+<TR>
+<TD><B><FONT SIZE="+1"><A NAME="error">&nbsp;error</A></FONT></B></TD>
+<TD ALIGN="RIGHT">Availability: version 1.0&nbsp;</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+<TR>
+<TD COLSPAN="2">Used to get messages explaining errors that occurred in setting any of the addresses.</TD>
+</TR>
+<TR>
+<TD WIDTH="2%">&nbsp;</TD>
+<TD WIDTH="98%"> <TABLE BORDER="0" WIDTH="100%">
+<TR>
+<TD WIDTH="20%"><B>Tag Body</B></TD>
+<TD WIDTH="80%">JSP</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Script Variable</B></TD>
+<TD WIDTH="80%">No</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Restrictions</B></TD>
+<TD WIDTH="80%">Must be nested within a send tag.</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Attributes</B></TD>
+<TD WIDTH="80%">
+      <TABLE BORDER="0" WIDTH="100%">
+       <TR>
+        <TD WIDTH="40%">Name</TD>
+        <TD WIDTH="20%">Required</TD>
+        <TD WIDTH="40%">Runtime Expression Evaluation</TD>
+       </TR>
+       <TR BGCOLOR="#CCCCCC">
+        <TD WIDTH="40%"><B>&nbsp;id</B></TD>
+        <TD WIDTH="20%">&nbsp;Yes</TD>
+        <TD WIDTH="40%">&nbsp;No</TD>
+       </TR>
+       <TR>
+        <TD COLSPAN="3">Script variable id for use with standard
+         <B>jsp:getProperty</B> tag</TD>
+       </TR>
+      </TABLE> 
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%"><B>Properties</B></TD>
+<TD WIDTH="80%">
+      <TABLE BORDER="0" WIDTH="100%">
+       <TR>
+        <TD WIDTH="60%">Name</TD>
+        <TD WIDTH="20%">Get</TD>
+        <TD WIDTH="20%">Set</TD>
+       </TR>
+       <TR BGCOLOR="#CCCCCC">
+        <TD WIDTH="60%"><B>&nbsp;error</B></TD>
+        <TD WIDTH="20%">&nbsp;Yes</TD>
+        <TD WIDTH="20%">&nbsp;No</TD>
+       </TR>
+       <TR>
+        <TD COLSPAN="3">The current error in the error list as a string.</TD>
+       </TR>
+      </TABLE>
+</TD>
+</TR>
+<TR>
+<TD WIDTH="20%" VALIGN="TOP"><B>Example</B></TD>
+<TD WIDTH="80%"><BR>
+<PRE>
+&lt;!-- Set text to be displayed if an error occurs when creating the  --&gt;
+&lt;!-- e-mail started with the &lt;mt:mail&gt; tag. The message will use --&gt;
+&lt;!-- the error messages from the tag to be more specific as to the --&gt;
+&lt;!-- errors encountered. --&gt;
+<BR>
+&lt;mt:mail to=&quot;foo@home.net&quot; from=&quot;bar@home.net&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:subject&gt;learning about the mail tag library&lt;/mt:subject&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:message&gt;<I>[body of message]</I>&lt;/mt:message&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:send&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The following error(s) have occured: 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;mt:error id=&quot;err&quot;&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;jsp:getProperty name=&quot;err&quot; property=&quot;error&quot;/&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/mt:error&gt;
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/mt:send&gt;
+&lt;/mt:mail&gt;
+</PRE>
+
+</TD>
+</TR>
+</TABLE>
+</TD>
+</TR>
+</TABLE>
+
+<H3><A NAME="examples">Examples</A></H3>
+<P>See mail-examples.war for examples that use tags from this custom tag
+library.</P>
+<H3><A NAME="javadocs">Javadocs</A></H3>
+<P>Java programmers can view the java class documentation for this tag library
+as <A HREF="javadoc/index.html">javadocs</A>.</P>
+<H3><A NAME="history">Revision History</A></H3>
+<P>Review the complete <A HREF="changes.html">revision history</A> of this tag
+library.</P>
+</table></BODY>
+</HTML>
+
