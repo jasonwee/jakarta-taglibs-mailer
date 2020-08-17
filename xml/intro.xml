@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+<!--
+  Copyright 1999-2004 The Apache Software Foundation
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<document url="./intro.xml">
+
+  <properties>
+    <author>Rich Catlett</author>
+    <title>The Jakarta-Taglibs Project: Mailer Tag Library</title>
+  </properties>
+
+  <body>
+
+
+  <section name="Mailer Tag Library" href="Welcome">
+  <p>This custom tag library is used to send e-mail.
+  </p>
+
+  </section>
+
+  <section name="News" href="News">
+    <news>
+      <newsitem date="01/26/2004">
+        The nightly build now includes a Port tag for setting the SMTP port
+        dynamically.
+      </newsitem>
+      <newsitem date="12/1/2002">
+        Version 1.1 Released
+      </newsitem>
+      <newsitem date="10/30/2002">
+        The nightly build now has support for the Server tag for setting
+        the SMTP host dynamically. Many tags refactored to fix bugs when
+        running in a JSP engine which supports custom tag pooling like
+        Tomcat 4.1 with Jasper 2. This is considered version 1.1 Beta now.
+      </newsitem>
+      <newsitem date="04/14/2002">
+        Version 1.0 Released
+      </newsitem>
+    </news>
+  </section>
+
+  <section name="Documentation" href="Documentation">
+
+  <p>For more information about the Mailer Tag Library, look at the on-line documentation:</p>
+  <ul>
+  <li>
+    View the current release <a href="mailer-1.1/index.html">
+    Mailer 1.1 Taglib Documentation</a></li>
+  <li>
+    View the development version of the <a href="index.html">
+    Mailer Taglib Documentation</a>
+  </li>
+  </ul>
+
+  <p>For information on how to use the distributions, look at the following documentation:</p>
+
+  <ul>
+  <li>Using the Jakarta-Taglibs <a href="http://jakarta.apache.org/taglibs/binarydist.html">Binary Distribution</a></li>
+  <li>Using the Jakarta-Taglibs <a href="http://jakarta.apache.org/taglibs/sourcedist.html">Source Distribution</a></li>
+  </ul>
+
+  </section>
+
+  <section name="Download" href="Download">
+
+  <p>Download a binary distribution of the Mailer Tag Library
+  <ul>
+  <li>
+    Download the Mailer Tag Library 1.1 Release from an
+    <a href="http://jakarta.apache.org/site/binindex.cgi#Release%20Builds">
+    Apache Jakarta Project Mirror</a>
+  </li>
+  <li>
+    Download the Mailer Tag Library
+    <a href="http://jakarta.apache.org/builds/jakarta-taglibs/nightly/projects/mailer/">
+    nightly development build</a>
+  </li>
+  </ul>
+  </p>
+
+  <p>The following distributions are also available for download:</p>
+  <ul>
+  <li>Download <a href="http://jakarta.apache.org/builds/jakarta-taglibs/nightly/src/">Jakarta-Taglibs Source</a></li>
+  <li>Download entire <a href="http://jakarta.apache.org/builds/jakarta-taglibs/nightly">Jakarta-Taglibs Distribution</a></li>
+  </ul>
+
+  </section>
+
+  <section name="Contributors" href="Contributors">
+  <p>List of contributors:</p>
+
+  <ul>
+  <li>Rich Catlett</li>
+  <li>Martin Cooper</li>
+  </ul>
+
+  </section>
+
+  </body>
+</document>
